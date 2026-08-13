@@ -1,17 +1,22 @@
-# ShipNow API - Tests Funcionales Automatizados
+# ShipNow API - Carga de Archivos y Metadatos (Multer)
 
-Esta entrega incorpora una suite de pruebas funcionales automatizadas con Mocha, Chai y Supertest, garantizando la estabilidad de las respuestas HTTP, esquemas JSON y gestión centralizada de errores.
+Esta entrega añade el soporte para la recepción, validación, almacenamiento físico local y registro de metadatos de documentos y comprobantes mediante **Multer** y peticiones `multipart/form-data`.
 
-## Herramientas de Testing
+## Estructura de Almacenamiento
 
-- Mocha:Runner ejecutor de la suite de pruebas.
-- Chai: Librería de aserciones para validar payloads y propiedades ('expect').
-- Supertest: Cliente HTTP para testear endpoints Express sin levantar el servidor en puertos red.
+Los archivos cargados se distribuyen dinámicamente según la entidad de origen (excluidos del repositorio mediante `.gitignore`):
+- `uploads/documents/`: Documentos personales de usuarios (DNI, licencias, etc.).
+- `uploads/receipts/`: Comprobantes operacionales asociados a pedidos/entregas.
 
-## Requisitos de Entorno para Pruebas
+## Endpoints de Carga
 
-Los tests utilizan una base de datos aislada configurada en '.env.test':
-```env
-PORT=3001
-NODE_ENV=test
-MONGO_URI=mongodb://127.0.0.1:27017/shipnow_test_db
+1. **`POST /api/users/:id/documents`**
+   - Campo form-data: `document` (Binary file - PDF, JPG, PNG, máx 5MB).
+   - Campo adicional: `docType` (`DNI`, `LICENSE`, `TAX_ID`, `OTHER`).
+2. **`POST /api/orders/:id/receipt`**
+   - Campo form-data: `receipt` (Binary file - PDF, JPG, PNG, máx 5MB).
+
+## Ejecución de Pruebas
+
+```bash
+npm test

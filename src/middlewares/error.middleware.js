@@ -1,34 +1,52 @@
-import { ERROR_CODES } from '../constants/error.dictionary.js';
+import multer from 'multer';
+import { CustomError } from '../errors/custom.errors.js';
+import { ERROR_DICTIONARY, ERROR_CODES } from '../constants/error.dictionary.js';
 import { logger } from '../utils/logger.js';
 
 export const errorHandler = (err, req, res, next) => {
-  let statusCode = err.statusCode || ERROR_CODES.INTERNAL_SERVER_ERROR.status;
-  let code = err.code || ERROR_CODES.INTERNAL_SERVER_ERROR.code;
-  let message = err.message || 'Error interno del servidor';
+  let errorInstance = err;
 
-  if (err.name === 'CastError') {
-    statusCode = ERROR_CODES.BAD_REQUEST.status;
-    code = ERROR_CODES.BAD_REQUEST.code;
-    message = `Formato de ID inválido: ${err.value}`;
-  } else if (err.name === 'ValidationError') {
-    statusCode = ERROR_CODES.VALIDATION_ERROR.status;
-    code = ERROR_CODES.VALIDATION_ERROR.code;
-    message = Object.values(err.errors).map((e) => e.message).join(', ');
+  // Multer Errors
+  if (err instanceof multer.MulterError) {
+    if (err.code === 'LIMIT_FILE_SIZE') {
+      errorInstance = new CustomError('FILE_TOO_LARGE');
+    } else {
+      errorInstance = new CustomError('BAD_REQUEST', `Error al procesar archivo: ${err.message}`);
+    }
   }
 
-  const logPayload = `[${code}] ${req.method} ${req.originalUrl} - ${message}`;
+  // Mongoose Errors
+  if (err.name === 'ValidationError') {
+    errorInstance = new CustomError('VALIDATION_ERROR', err.message);
+  } else if (err.name === 'CastError') {
+    errorInstance = new CustomError('BAD_REQUEST', `Formato de ID inválido: ${err.value}`);
+  }
 
-  // Diferenciación de nivel de log según la gravedad del error
+  const dictionary = ERROR_DICTIONARY || ERROR_CODES || {};
+  const fallbackError = dictionary.INTERNAL_ERROR || {
+    status: 500,
+    code: 'INTERNAL_ERROR',
+    message: 'Error interno del servidor',
+  };
+
+  const errorCode = errorInstance.code || 'INTERNAL_ERROR';
+  const responseError = dictionary[errorCode] || fallbackError;
+  const statusCode = errorInstance.status || responseError.status || 500;
+
+  const logMessage = `[${responseError.code || errorCode}] ${req.method} ${req.originalUrl} - ${
+    errorInstance.message || responseError.message
+  }`;
+
   if (statusCode >= 500) {
-    logger.error(logPayload);
+    logger.error(logMessage);
   } else {
-    logger.warning(logPayload);
+    logger.warning(logMessage);
   }
 
-  res.status(statusCode).json({
+  return res.status(statusCode).json({
     status: 'error',
-    code,
-    message,
+    code: responseError.code || errorCode,
+    message: errorInstance.message || responseError.message,
     timestamp: new Date().toISOString(),
     path: req.originalUrl,
   });

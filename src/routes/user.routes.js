@@ -1,99 +1,99 @@
 import { Router } from 'express';
-import { UserRepository } from '../repositories/user.repository.js';
-import { UserService } from '../services/user.service.js';
-import { UserController } from '../controllers/user.controller.js';
+import { uploader } from '../config/multer.config.js';
+import { UserModel } from '../models/user.model.js';
+import { CustomError } from '../errors/custom.errors.js';
+import { logger } from '../utils/logger.js';
+import mongoose from 'mongoose';
 
 const router = Router();
-const userRepository = new UserRepository();
-const userService = new UserService(userRepository);
-const userController = new UserController(userService);
 
-/**
- * @openapi
- * /users:
- *   get:
- *     summary: Obtener todos los usuarios activos
- *     tags: [Users]
- *     responses:
- *       200:
- *         description: Lista de usuarios obtenida exitosamente
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 status: { type: string, example: success }
- *                 data:
- *                   type: array
- *                   items:
- *                     $ref: '#/components/schemas/User'
- *       500:
- *         description: Error interno del servidor
- *         content:
- *           application/json:
- *             schema:
- *               $ref: '#/components/schemas/ErrorResponse'
- */
-router.get('/', userController.getUsers);
+// GET /api/users
+router.get('/', async (req, res, next) => {
+  try {
+    const users = await UserModel.find();
+    return res.status(200).json({ status: 'success', data: users });
+  } catch (error) {
+    next(error);
+  }
+});
 
-/**
- * @openapi
- * /users/{id}:
- *   get:
- *     summary: Obtener un usuario por su ID
- *     tags: [Users]
- *     parameters:
- *       - in: path
- *         name: id
- *         required: true
- *         schema:
- *           type: string
- *         description: ID de MongoDB del usuario
- *     responses:
- *       200:
- *         description: Usuario encontrado
- *       400:
- *         description: Formato de ID inválido
- *         content:
- *           application/json:
- *             schema:
- *               $ref: '#/components/schemas/ErrorResponse'
- *       404:
- *         description: Usuario no encontrado
- *         content:
- *           application/json:
- *             schema:
- *               $ref: '#/components/schemas/ErrorResponse'
- */
-router.get('/:id', userController.getUserById);
+// POST /api/users
+router.post('/', async (req, res, next) => {
+  try {
+    const { name, email, role } = req.body;
+    if (!name || !email) {
+      throw new CustomError('VALIDATION_ERROR', 'Path `email` is required.');
+    }
+    const newUser = await UserModel.create({ name, email, role });
+    return res.status(201).json({ status: 'success', data: newUser });
+  } catch (error) {
+    next(error);
+  }
+});
 
-/**
- * @openapi
- * /users:
- *   post:
- *     summary: Crear un nuevo usuario
- *     tags: [Users]
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *             required: [name, email]
- *             properties:
- *               name: { type: string, example: Juan Pérez }
- *               email: { type: string, example: juan.perez@test.com }
- *               role: { type: string, example: USER }
- *     responses:
- *       201:
- *         description: Usuario creado exitosamente
- *       409:
- *         description: El correo ya existe
- *         content:
- *           application/json:
- *             schema:
- *               $ref: '#/components/schemas/ErrorResponse'
- */
-router.post('/', userController.createUser);
+// GET /api/users/:id
+router.get('/:id', async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      throw new CustomError('BAD_REQUEST', `Formato de ID inválido: ${id}`);
+    }
+    const user = await UserModel.findById(id);
+    if (!user) {
+      throw new CustomError('USER_NOT_FOUND');
+    }
+    return res.status(200).json({ status: 'success', data: user });
+  } catch (error) {
+    next(error);
+  }
+});
+
+// POST /api/users/:id/documents
+router.post('/:id/documents', uploader.single('document'), async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    const { docType = 'OTHER' } = req.body;
+
+    const allowedDocTypes = ['DNI', 'LICENSE', 'TAX_ID', 'OTHER'];
+    if (!allowedDocTypes.includes(docType)) {
+      throw new CustomError('INVALID_DOC_TYPE');
+    }
+
+    if (!req.file) {
+      throw new CustomError('MISSING_FILE');
+    }
+
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      throw new CustomError('USER_NOT_FOUND');
+    }
+
+    const user = await UserModel.findById(id);
+    if (!user) {
+      throw new CustomError('USER_NOT_FOUND');
+    }
+
+    const documentData = {
+      docType,
+      filename: req.file.filename,
+      originalName: req.file.originalname,
+      path: req.file.path,
+      mimetype: req.file.mimetype,
+      size: req.file.size,
+    };
+
+    user.documents.push(documentData);
+    await user.save();
+
+    logger.info(`Documento '${req.file.originalname}' cargado exitosamente para el usuario ID: ${id}`);
+
+    return res.status(200).json({
+      status: 'success',
+      message: 'Documento cargado exitosamente',
+      data: user,
+    });
+  } catch (error) {
+    next(error);
+  }
+});
 
 export default router;
