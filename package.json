@@ -1,7 +1,7 @@
 {
   "name": "shipnow-api",
   "version": "1.0.0",
-  "description": "API de ShipNow con arquitectura por capas, Mocks, Error Handling y Logging con Winston",
+  "description": "API de ShipNow con arquitectura por capas, Mocks, Errors, Logging y Swagger UI",
   "main": "src/app.js",
   "type": "module",
   "scripts": {
@@ -13,6 +13,8 @@
     "dotenv": "^16.4.5",
     "express": "^4.19.2",
     "mongoose": "^8.3.1",
+    "swagger-jsdoc": "^6.2.8",
+    "swagger-ui-express": "^5.0.0",
     "winston": "^3.13.0",
     "winston-daily-rotate-file": "^5.0.0"
   },

@@ -1,35 +1,10 @@
-# ShipNow API - Sistema de Logging y Monitoreo Básico
 
-Esta versión integra Winston como logger centralizado para sustituir el uso de console.log() por un monitoreo ordenado, persistente y estructurado por niveles.
+# ShipNow API - Documentación Técnica Interactivas con Swagger / OpenAPI
 
-## Niveles de Logging Implementados
+Esta entrega expone la especificación OpenAPI 3.0 de la API ShipNow a través de Swagger UI, permitiendo explorar, probar y validar de manera interactiva todos los módulos de la aplicación.
 
+## Acceso a la Documentación Interactivas
 
-'fatal' (0)   Fallas críticas irrecuperables (error de conexión DB al iniciar). 
-'error'  (1)  Excepciones del servidor y códigos HTTP 500+. 
-'warning' (2)  Advertencias de negocio y errores de cliente (400, 404, validaciones). 
-'info'  (3)  Eventos del ciclo de vida de la app (inicio del servidor, conexión DB, seed exitoso). 
-'http'  (4)  Trazabilidad de solicitudes HTTP entrantes. 
-'debug'  (5)  Logs detallados de depuración (activado solo en entorno `development`). 
-
-## Comportamiento según Entorno
-
-- Desarrollo (`NODE_ENV=development`): Muestra todos los niveles desde `debug` hasta `fatal` en consola con salida formateada a color.
-- Producción (`NODE_ENV=production`): Muestra únicamente desde nivel `info` en adelante en consola.
-
-## Persistencia y Rotación de Archivos
-
-Los logs de mayor prioridad ('error' y 'fatal') se persisten automáticamente en la carpeta '/logs' usando rotación diaria 
- (winston-daily-rotate-file) 
-- Archivos generados: 'logs/error-YYYY-MM-DD.log'
-- Retención máxima: 14 días.
-- Tamaño máximo por archivo: 20 MB.
-- La carpeta '/logs' está incluida en '.gitignore' para no subir registros al repositorio.
-
-## Endpoint de Prueba del Logger
-
-Para verificar la emisión de todos los niveles de log:
-
-- Método: 'GET'
-- URL: 'http://localhost:3000/api/logger-test'
-- Efecto: Dispara eventos en los 6 niveles. Los registros 'error' y 'fatal' se escribirán en el archivo dentro de '/logs/'.
+1. Iniciar el servidor de desarrollo:
+   ```bash
+   npm run dev
