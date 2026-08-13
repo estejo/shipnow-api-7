@@ -25,4 +25,8 @@ export class UserRepository {
   async softDelete(id) {
     return await UserModel.findByIdAndUpdate(id, { isActive: false }, { new: true });
   }
+
+  async createMany(usersData) {
+  return await UserModel.insertMany(usersData);
+  }
 }
