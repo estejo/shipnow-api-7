@@ -2,11 +2,13 @@ import { Router } from 'express';
 import userRoutes from './user.routes.js';
 import productRoutes from './product.routes.js';
 import mockRoutes from './mock.routes.js';
+import loggerTestRoutes from './loggerTest.routes.js';
 
 const router = Router();
 
 router.use('/users', userRoutes);
 router.use('/products', productRoutes);
-router.use('/mocks', mockRoutes); // Expone la ruta /api/mocks
+router.use('/mocks', mockRoutes);
+router.use('/logger-test', loggerTestRoutes); // GET /api/logger-test
 
 export default router;

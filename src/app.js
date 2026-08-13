@@ -4,30 +4,37 @@ import { config } from './config/env.config.js';
 import apiRouter from './routes/index.js';
 import { errorHandler } from './middlewares/error.middleware.js';
 import { notFoundHandler } from './middlewares/notFound.middleware.js';
+import { logger } from './utils/logger.js';
 
 const app = express();
 
 app.use(express.json());
 
-// Rutas API
+// Log de peticiones HTTP en desarrollo
+app.use((req, res, next) => {
+  logger.http(`${req.method} ${req.url}`);
+  next();
+});
+
 app.use('/api', apiRouter);
 
-// Middlewares de gestión de errores (se ejecutan al no coincidir ninguna ruta o invocarse next(err))
 app.use(notFoundHandler);
 app.use(errorHandler);
 
 async function startServer() {
   try {
     await mongoose.connect(config.mongoUri);
-    console.log('[DATABASE] Conexión exitosa a MongoDB');
+    logger.info('Conexión exitosa a MongoDB establecida');
 
     app.listen(config.port, () => {
-      console.log(`[SERVER] Escuchando en el puerto ${config.port} (Entorno: ${config.nodeEnv})`);
+      logger.info(`Servidor ShipNow escuchando en el puerto ${config.port} (Entorno: ${config.nodeEnv})`);
     });
   } catch (error) {
-    console.error('[SERVER ERROR] Fallo al iniciar el servidor:', error.message);
+    logger.fatal(`Fallo crítico al iniciar el servidor o conectar a MongoDB: ${error.message}`);
     process.exit(1);
   }
 }
+
+startServer();
 
 startServer();

@@ -1,7 +1,7 @@
 {
   "name": "shipnow-api",
   "version": "1.0.0",
-  "description": "API de ShipNow refactorizada por capas",
+  "description": "API de ShipNow con arquitectura por capas, Mocks, Error Handling y Logging con Winston",
   "main": "src/app.js",
   "type": "module",
   "scripts": {
@@ -12,7 +12,9 @@
     "@faker-js/faker": "^8.4.1",
     "dotenv": "^16.4.5",
     "express": "^4.19.2",
-    "mongoose": "^8.3.1"
+    "mongoose": "^8.3.1",
+    "winston": "^3.13.0",
+    "winston-daily-rotate-file": "^5.0.0"
   },
   "devDependencies": {
     "nodemon": "^3.1.0"
