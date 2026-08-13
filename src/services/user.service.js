@@ -1,4 +1,5 @@
 import { USER_ROLES } from '../constants/index.js';
+import { UserNotFoundError, UserAlreadyExistsError } from '../errors/custom.errors.js';
 
 export class UserService {
   constructor(userRepository) {
@@ -12,7 +13,7 @@ export class UserService {
   async getUserById(id) {
     const user = await this.userRepository.findById(id);
     if (!user) {
-      throw new Error('Usuario no encontrado');
+      throw new UserNotFoundError();
     }
     return user;
   }
@@ -20,10 +21,9 @@ export class UserService {
   async createUser(userData) {
     const existingUser = await this.userRepository.findByEmail(userData.email);
     if (existingUser) {
-      throw new Error('El correo electrónico ya se encuentra registrado');
+      throw new UserAlreadyExistsError();
     }
 
-    // Regla de negocio: si no se especifica rol, asignar USER por defecto
     const role = Object.values(USER_ROLES).includes(userData.role)
       ? userData.role
       : USER_ROLES.USER;

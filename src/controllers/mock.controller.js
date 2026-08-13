@@ -3,42 +3,34 @@ export class MockController {
     this.mockService = mockService;
   }
 
-  getMockUsers = async (req, res) => {
+  getMockUsers = (req, res, next) => {
     try {
-      const qty = parseInt(req.query.qty) || 5;
-      const users = this.mockService.getMockUsers(qty);
-      res.status(200).json(users);
+      const users = this.mockService.getMockUsers(req.query.qty);
+      res.status(200).json({ status: 'success', data: users });
     } catch (error) {
-      res.status(500).json({ status: 'error', message: error.message });
+      next(error);
     }
   };
 
-  getMockOrders = async (req, res) => {
+  getMockOrders = (req, res, next) => {
     try {
-      const qty = parseInt(req.query.qty) || 5;
-      const orders = this.mockService.getMockOrders(qty);
-      res.status(200).json(orders);
+      const orders = this.mockService.getMockOrders(req.query.qty);
+      res.status(200).json({ status: 'success', data: orders });
     } catch (error) {
-      res.status(500).json({ status: 'error', message: error.message });
+      next(error);
     }
   };
 
-  seedDatabase = async (req, res) => {
+  seedDatabase = async (req, res, next) => {
     try {
-      const qty = parseInt(req.query.qty) || 10;
-      const result = await this.mockService.seedDatabase(qty);
+      const result = await this.mockService.seedDatabase(req.query.qty);
       res.status(201).json({
+        status: 'success',
         message: 'Base de datos poblada exitosamente',
-        insertados: result.totalInserted,
-        detalle: {
-          usuarios: result.usersInserted,
-          pedidos: result.ordersInserted,
-          entregas: result.deliveriesInserted,
-        },
+        data: result,
       });
-    } 
-    catch (error) {
-      res.status(500).json({ status: 'error', message: error.message });
+    } catch (error) {
+      next(error);
     }
   };
 }
